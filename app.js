@@ -39,6 +39,7 @@ const state = {
   lines: [],
   selectedId: null,
   drag: null,
+  pan: null,
   lineDraft: null,
 };
 
@@ -464,6 +465,11 @@ function startObjectDrag(event) {
 }
 
 function onPointerMove(event) {
+  if (state.pan) {
+    canvasWrap.scrollLeft = state.pan.scrollLeft - (event.clientX - state.pan.startX);
+    canvasWrap.scrollTop = state.pan.scrollTop - (event.clientY - state.pan.startY);
+  }
+
   if (state.drag) {
     const item = state.objects.find((object) => object.id === state.drag.id);
     const dx = (event.clientX - state.drag.startX) / state.zoom;
@@ -485,6 +491,10 @@ function onPointerMove(event) {
 }
 
 function onPointerUp(event) {
+  if (state.pan) {
+    state.pan = null;
+    canvasWrap.classList.remove("panning");
+  }
   if (state.drag) state.drag = null;
   if (state.lineDraft) {
     const draft = state.lineDraft;
@@ -780,6 +790,14 @@ canvas.addEventListener("pointerdown", (event) => {
     state.lineDraft = { type: state.tool, start: point, end: point };
   } else {
     select(null);
+    state.pan = {
+      startX: event.clientX,
+      startY: event.clientY,
+      scrollLeft: canvasWrap.scrollLeft,
+      scrollTop: canvasWrap.scrollTop,
+    };
+    canvasWrap.classList.add("panning");
+    canvas.setPointerCapture(event.pointerId);
   }
 });
 
